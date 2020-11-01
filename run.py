@@ -11,10 +11,12 @@ N_TIMESTEPS = 2
 pilot_a = []
 pilot_b = []
 
+
 class Flight:
   def __init__(self, airport):
     self.airport = airport
-  
+
+
 for timestep in range(N_TIMESTEPS):
     airport_list = []
     for flight in range(N_AIRPORTS):
@@ -22,14 +24,6 @@ for timestep in range(N_TIMESTEPS):
         airport_list.append(Var(flight))
     pilot_a.append(airport_list)
 
-print(pilot_a)
-
-"""
-for i in range(N_AIRPORTS): 
-  flight = Flight(i)
-  pilot_a.append(Var(flight))
-  pilot_b.append(Var(flight))
-"""
 
 def iff(left, right):
     return (left.negate() | right) & (right.negate() | left)
@@ -53,7 +47,16 @@ def display_solution(solution):
         print("Timestep " + str(timestep))
         for flight in range(N_AIRPORTS):
             keys = list(solution)
-            print("Airport " + str(flight) + ": " + str(solution[keys[flight]]))
+            print("Airport " + str(flight) + ": " + str(solution[keys[flight + (N_AIRPORTS * timestep)]]))
+
+
+def recursionAirports(airports):
+    if(airports > 0): 
+        return (pilot_a[N_TIMESTEPS][airports] & ~recursionAirports(airports - 1))
+
+def recursionTimesteps(timesteps):
+    if(0 > timesteps): 
+        return (pilot_a[timesteps][N_AIRPORTS] & ~recursionTimesteps(timesteps - 1))
 
 #
 # Build an example full theory for your setting and return it.
@@ -73,11 +76,34 @@ def example_theory():
 
     for timestep in range(N_TIMESTEPS):
         E.add_constraint((pilot_a[timestep][0] & ~pilot_a[timestep][1] & ~pilot_a[timestep][2]) | (~pilot_a[timestep][0] & pilot_a[timestep][1] & ~pilot_a[timestep][2]) | (~pilot_a[timestep][0] & ~pilot_a[timestep][1] & pilot_a[timestep][2]))
+        """ CNF
+        E.add_constraint(~pilot_a[timestep][0] | ~pilot_a[timestep][1])
+        E.add_constraint(~pilot_a[timestep][0] | ~pilot_a[timestep][2])
+        E.add_constraint(~pilot_a[timestep][0] | pilot_a[timestep][1] | ~pilot_a[timestep][2])
+        E.add_constraint(pilot_a[timestep][0] | ~pilot_a[timestep][1] | ~pilot_a[timestep][2])
+        E.add_constraint(~pilot_a[timestep][1] | ~pilot_a[timestep][2])
+        E.add_constraint(pilot_a[timestep][0] | pilot_a[timestep][1] | pilot_a[timestep][2])
+        """
 
+    #E.add_constraint((pilot_a[0][0] & ~pilot_a[0][1] & ~pilot_a[0][2]) | (~pilot_a[0][0] & pilot_a[0][1] & ~pilot_a[0][2]) | (~pilot_a[0][0] & ~pilot_a[0][1] & pilot_a[0][2]))
+
+    # Pilot A always starts on airport 1!
+    # E.add_constraint(pilot_a[0][0])
+
+    print("Pre-solution: %s" % E.solve())
 
     # Pilot A cannot travel to the same airport in its 2 timesteps.
     for i in range(N_AIRPORTS):
-        E.add_constraint(pilot_a[0][i] & ~pilot_a[1][i])
+        E.add_constraint(~pilot_a[0][i] | ~pilot_a[1][i])
+
+    #T T F
+    #F F T
+
+    #~(A & B)
+    #~A | ~B
+
+    #for i in range(N_AIRPORTS):
+    #    E.add_constraint((~pilot_a[0][i] & pilot_a[1][i]) | (pilot_a[0][i] & ~pilot_a[1][i]) | (~pilot_a[0][i] & ~pilot_a[1][i]))
 
         #E.add_constraint((pilot_b[timestep][0] & ~pilot_b[timestep][1] & ~pilot_b[timestep][2]) | (~pilot_b[timestep][0] & pilot_b[timestep][1] & ~pilot_b[timestep][2]) | (~pilot_b[timestep][0] & ~pilot_b[timestep][1] & pilot_b[timestep][2]))
 
@@ -96,7 +122,7 @@ if __name__ == "__main__":
     print("\nNumber of solutions: %d" % T.count_solutions())
     print("\nSample solution:")
     display_solution(T.solve())
-    # print("   Solution: %s" % T.solve())
+    #print("   Solution: %s" % T.solve())
 
     print("\nVariable likelihoods:")
     #for flight in range(N_AIRPORTS):
