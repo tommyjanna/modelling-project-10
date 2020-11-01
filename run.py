@@ -11,7 +11,6 @@ N_TIMESTEPS = 2
 pilot_a = []
 pilot_b = []
 
-
 class Flight:
   def __init__(self, airport):
     self.airport = airport
@@ -43,11 +42,23 @@ def display_solution(solution):
                 print("Airport #" + str(flight))
     """ 
     print("Pilot A")
+    for i in range(N_TIMESTEPS):
+        print("Timestep " + str(i))
+        for j in range(N_AIRPORTS):
+            keys = list(solution)
+            for k in range(N_TIMESTEPS * N_AIRPORTS):
+                if str(pilot_a[i][j]) == "Var(" + str(keys[k]) + ")":
+                    print("Airport " + str(j) + ": " + str(solution[keys[k]]))
+
+
+    """ Hell lies within this codeblock
+    print("Pilot A")
     for timestep in range(N_TIMESTEPS):
         print("Timestep " + str(timestep))
         for flight in range(N_AIRPORTS):
             keys = list(solution)
-            print("Airport " + str(flight) + ": " + str(solution[keys[flight + (N_AIRPORTS * timestep)]]))
+            print("Airport " + str(flight) + ": " + str(solution[keys[flight + (N_AIRPORTS * timestep)]]) + str(pilot_a[timestep][flight]))
+    """
 
 
 def recursionAirports(airports):
@@ -90,11 +101,8 @@ def example_theory():
     # Pilot A always starts on airport 1!
     # E.add_constraint(pilot_a[0][0])
 
-    print("Pre-solution: %s" % E.solve())
-
     # Pilot A cannot travel to the same airport in its 2 timesteps.
-    for i in range(N_AIRPORTS):
-        E.add_constraint(~pilot_a[0][i] | ~pilot_a[1][i])
+    E.add_constraint((~pilot_a[0][0] | ~pilot_a[1][0]) & (~pilot_a[0][1] | ~pilot_a[1][1]) & (~pilot_a[0][2] | ~pilot_a[1][2]))
 
     #T T F
     #F F T
