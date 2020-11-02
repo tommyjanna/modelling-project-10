@@ -17,16 +17,24 @@ class Flight:
 
 
 for timestep in range(N_TIMESTEPS):
+    # Initialize pilot A variables
     airport_list = []
     for flight in range(N_AIRPORTS):
         flight = Flight(flight)
         airport_list.append(Var(flight))
     pilot_a.append(airport_list)
 
+    # Initialize pilot B variables
+    airport_list = []
+    for flight in range(N_AIRPORTS):
+        flight = Flight(flight)
+        airport_list.append(Var(flight))
+    pilot_b.append(airport_list)
+
 
 def iff(left, right):
     return (left.negate() | right) & (right.negate() | left)
-  
+
 
 def display_solution(solution):
     # Normal solution output:
@@ -46,8 +54,17 @@ def display_solution(solution):
         print("Timestep " + str(i))
         for j in range(N_AIRPORTS):
             keys = list(solution)
-            for k in range(N_TIMESTEPS * N_AIRPORTS):
+            for k in range(len(keys)):
                 if str(pilot_a[i][j]) == "Var(" + str(keys[k]) + ")":
+                    print("Airport " + str(j) + ": " + str(solution[keys[k]]))
+
+    print("\nPilot B")
+    for i in range(N_TIMESTEPS):
+        print("Timestep " + str(i))
+        for j in range(N_AIRPORTS):
+            keys = list(solution)
+            for k in range(len(keys)):
+                if str(pilot_b[i][j]) == "Var(" + str(keys[k]) + ")":
                     print("Airport " + str(j) + ": " + str(solution[keys[k]]))
 
 
@@ -69,6 +86,7 @@ def display_solution(solution):
 def example_theory():
     E = Encoding()
     
+    ### Pilot A can only make one flight per timestep.
     # Use a string to build the logical expression dynamically.
     only_one_airport = ""
 
@@ -97,21 +115,46 @@ def example_theory():
     # Remove the last & from the string.
     only_one_airport = only_one_airport[:-3] 
     
-
     # Some sexy stuff 
-    print(only_one_airport)
-    print(eval(only_one_airport))
+    # print(only_one_airport)
+    # print(eval(only_one_airport))
 
     # Evaluate the string to turn it into NNF type
     E.add_constraint(eval(only_one_airport))
 
-    # Pilot A always starts on airport 1!
+    ### Pilot A always starts on airport 1!
     # E.add_constraint(pilot_a[0][0])
 
-    # The pilot cannot be at the same airport in two adjacent timesteps.
+    ### The pilot cannot be at the same airport in two adjacent timesteps.
     for timestep in range(N_TIMESTEPS - 1):
         for airport in range(N_AIRPORTS):
             E.add_constraint(~pilot_a[timestep][airport] | ~pilot_a[timestep + 1][airport])
+
+
+    ### Pilot B can only make a single flight
+    single_flight = ""
+
+    for n in range(N_TIMESTEPS * N_AIRPORTS):
+        single_flight += "("
+        for timestep in range(N_TIMESTEPS):
+            for airport in range(N_AIRPORTS):
+                if n == (timestep * 3) + airport:
+                    single_flight += "pilot_b[%d][%d] & " % (timestep, airport)
+                else:
+                    single_flight += "~pilot_b[%d][%d] & " % (timestep, airport)
+
+        single_flight = single_flight[:-3]
+        single_flight += ") | "
+
+    single_flight = single_flight[:-3]
+    # print(single_flight)
+    E.add_constraint(eval(single_flight))
+
+
+    ### Pilot A and B can't be at the same airport at the same timestep.
+    for timestep in range(N_TIMESTEPS):
+        for airports in range(N_AIRPORTS):
+            E.add_constraint(~pilot_a[timestep][airports] |  ~pilot_b[timestep][airports])
 
     return E
 
@@ -124,7 +167,7 @@ if __name__ == "__main__":
     print("\nNumber of solutions: %d" % T.count_solutions())
     print("\nSample solution:")
     display_solution(T.solve())
-    #print("   Solution: %s" % T.solve())
+    # print("   Solution: %s" % T.solve())
 
     print("\nVariable likelihoods:")
     #for flight in range(N_AIRPORTS):
