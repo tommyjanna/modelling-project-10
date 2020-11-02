@@ -6,7 +6,8 @@ from nnf import true
 
 
 N_AIRPORTS = 3
-N_TIMESTEPS = 2 
+N_TIMESTEPS = 3
+N_PILOT_B_MAX_FLIGHTS = N_TIMESTEPS - 1
 
 pilot_a = []
 pilot_b = []
@@ -31,6 +32,15 @@ for timestep in range(N_TIMESTEPS):
         airport_list.append(Var(flight))
     pilot_b.append(airport_list)
 
+""" Display pilot variable addresses
+for i in range(3):
+    for j in range(3):
+        print(pilot_a[i][j])
+
+for i in range(3):
+    for j in range(3):
+        print(pilot_b[i][j])
+"""
 
 def iff(left, right):
     return (left.negate() | right) & (right.negate() | left)
@@ -64,6 +74,8 @@ def display_solution(solution):
         for j in range(N_AIRPORTS):
             keys = list(solution)
             for k in range(len(keys)):
+#                print(pilot_b[i][j])
+#                print(str(keys[k]))
                 if str(pilot_b[i][j]) == "Var(" + str(keys[k]) + ")":
                     print("Airport " + str(j) + ": " + str(solution[keys[k]]))
 
@@ -125,13 +137,60 @@ def example_theory():
     ### Pilot A always starts on airport 1!
     # E.add_constraint(pilot_a[0][0])
 
-    ### The pilot cannot be at the same airport in two adjacent timesteps.
+    ### Pilot A cannot be at the same airport in two adjacent timesteps.
     for timestep in range(N_TIMESTEPS - 1):
         for airport in range(N_AIRPORTS):
             E.add_constraint(~pilot_a[timestep][airport] | ~pilot_a[timestep + 1][airport])
 
+    ### Pilot B can only make one flight per timestep, and can only fly one flight LESS than pilot A.
+    # Use a string to build the logical expression dynamically.
+    pilot_b_flights = ""
 
-    ### Pilot B can only make a single flight
+    for timestep in range(N_TIMESTEPS):
+        pilot_b_flights += "("
+        for airport in range(N_AIRPORTS):
+            # Current airport in loop is true.
+            pilot_b_flights += "(pilot_b[%d][%d] &" % (timestep, airport)
+
+            # All airports below airport are false, count up
+            for count_up in range(0, airport):
+                pilot_b_flights += " ~pilot_b[%d][%d] &" % (timestep, count_up)
+
+            # All airports above airport are false, count up
+            for count_up in range(airport + 1, N_AIRPORTS):
+                pilot_b_flights += " ~pilot_b[%d][%d] &" % (timestep, count_up)
+
+            # Remove the last & from the string
+            pilot_b_flights = pilot_b_flights[:-2]
+            pilot_b_flights += ") | "
+        
+        # Remove the last | from the string, use &'s to seperate timesteps
+        pilot_b_flights = pilot_b_flights[:-3]
+        pilot_b_flights += ") & "
+
+    # Remove the last & from the string.
+    pilot_b_flights = pilot_b_flights[:-3] 
+
+    print(pilot_b_flights)
+    # Evaluate the string to turn it into NNF type
+    E.add_constraint(eval(pilot_b_flights))
+
+    # Further, pilot B will remain at this airport after he is finished flying.
+    """ Why doesn't this version work?
+    for timestep in range(N_PILOT_B_MAX_FLIGHTS, N_TIMESTEPS):
+        for airport in range(N_AIRPORTS):
+            E.add_constraint(iff(pilot_b[timestep - N_TIMESTEPS - 1][airport], pilot_b[-1][airport]))
+    """
+    for airport in range(N_AIRPORTS):
+        E.add_constraint(iff(pilot_b[-2][airport], pilot_b[-1][airport]))
+
+    ### Pilot B cannot be at the same airport in two adjacent timesteps (except their last timestep of course).
+    for timestep in range(N_TIMESTEPS - 2):
+        for airport in range(N_AIRPORTS):
+            E.add_constraint(~pilot_b[timestep][airport] | ~pilot_b[timestep + 1][airport])
+
+
+    """### Pilot B can only make a single flight
     single_flight = ""
 
     for n in range(N_TIMESTEPS * N_AIRPORTS):
@@ -149,12 +208,15 @@ def example_theory():
     single_flight = single_flight[:-3]
     # print(single_flight)
     E.add_constraint(eval(single_flight))
+    """ 
 
-
-    ### Pilot A and B can't be at the same airport at the same timestep.
-    for timestep in range(N_TIMESTEPS):
+    ### Pilot A and B can't be at the same airport at the same timestep (other than timestep 0).
+    for timestep in range(1, N_TIMESTEPS):
         for airports in range(N_AIRPORTS):
             E.add_constraint(~pilot_a[timestep][airports] |  ~pilot_b[timestep][airports])
+
+    ### Pilot A and B both start at airport 0
+    E.add_constraint(pilot_a[0][0] & pilot_b[0][0])
 
     return E
 
