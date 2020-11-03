@@ -9,14 +9,19 @@ N_AIRPORTS = 3
 N_TIMESTEPS = 4
 N_PILOT_B_MAX_FLIGHTS = N_TIMESTEPS - 1
 
-pilot_a = []
-pilot_b = []
 
 class Flight:
   def __init__(self, airport):
     self.airport = airport
 
 
+pilot_a = []
+pilot_b = []    
+
+# Each pilot exists as an array of the class Flight.
+# There is a Flight object for every airport in the scenario multiplied
+# by the total number of timesteps. If a Flight is marked as True,
+# the pilot is at that airport at that given timestep. Otherwise, False.
 for timestep in range(N_TIMESTEPS):
     # Initialize pilot A variables
     airport_list = []
