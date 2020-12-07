@@ -7,11 +7,65 @@ N_AIRPORTS = 4
 N_TIMESTEPS = 5
 N_PILOT_B_MAX_FLIGHTS = N_TIMESTEPS - 1
 
+
 class Flight:
-  def __init__(self, airport):
-      self.airport = airport
+    def __init__(self, airport):
+        self.airport = airport
+
+class Pilot:
+    count = 0
+
+    def __init__(self, pilot_id, start):
+        self.pilot_id = chr(pilot_id + 65)
+        self.current_airport = start
+        Pilot.count += 1
+
+    def __str__(self):
+        return "Pilot: %c --- Current airport %d" % (self.pilot_id, self.current_airport)
+
+    def fly():
+        pass
+
+
+def find_max(values):
+    """
+    Returns index of max value in a list values.
+    If there exists multiple, pick one at random.
+    """
+
+    greatest = 0
+    greatest_indices = []
+
+    for i in range(len(values)):
+        if values[i] == greatest:
+            greatest_indices.append(i)
+
+        if values[i] > greatest:
+            greatest_indices.clear()
+            greatest = values[i]
+            greatest_indices.append(i)
+
+    # greatest_indices will have 1 or more indices. Pick one at random.
+    return random.choice(greatest_indices)
+
+def create_pilot():
+    """
+    Adds a new pilot at the end of the list pilots.
+    """
+    new_pilot = Pilot(len(pilots), find_max(demand))
+    demand[new_pilot.current_airport] -= 1
+    pilots.append(new_pilot)
+
+def display_pilots(pilots):
+    for pilot in pilots:
+        print(pilot)
+
+
 
 demand = []
+pilots = []
+
+##### OLD CODE TO BE REPLACED
 pilot_a = []
 pilot_b = []
 
@@ -33,33 +87,36 @@ for timestep in range(N_TIMESTEPS):
         flight = Flight(flight)
         airport_list.append(Var(flight))
     pilot_b.append(airport_list)
+##### END OLD CODE TO BE REPLACED
 
 # Generate demand
 # The starting airport doesn't have any demand
-demand.append(0)
-
-for airport in range(N_AIRPORTS - 1):
-    demand.append(random.randint(0, N_TIMESTEPS - 2))
+for airport in range(N_AIRPORTS):
+    demand.append(random.randint(0, N_TIMESTEPS - 1))
 
 
-# Calculate pilots required
-pilots = 1
+# Create pilots required based on demand
+# No matter what, start with one pilot
+create_pilot()
 total_demand = 0
 
 for val in demand:
     total_demand += val
 
-    if val > pilots * (N_TIMESTEPS // 2):
-        pilots += 1
+    if val > Pilot.count * (N_TIMESTEPS // 2):
+        create_pilot()
     
-while pilots * (N_TIMESTEPS - 1) < total_demand:
-    pilots += 1
+while Pilot.count * (N_TIMESTEPS - 1) < total_demand:
+    create_pilot()
+
 
 # Display demand
 for i in range(N_AIRPORTS):
-    print(str(i) + ": " + str(demand[i]))
+    print(str(i) + ": Demand " + str(demand[i]))
 
-print("Pilots calculated: " + str(pilots))
+print("Pilots calculated: " + str(Pilot.count))
+
+display_pilots(pilots)
 
 """ Display pilot variable addresses
 for i in range(3):
