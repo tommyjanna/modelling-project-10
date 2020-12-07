@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 poetry.lock
+
+# Tommy's files
+# notes.txt

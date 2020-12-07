@@ -1,0 +1,5 @@
+The starting airport doesn't have any demand
+
+When calculating the number of pilots required, there are two constraints
+1. The total demand must at least be less than or equal to the  (current_num_pilots * (number of timesteps - 1))
+2. The largest demand on a single airport must be (current_num_pilots * (number of timesteps / 2)) AND one less than the total number of timesteps (The demand generator should never allow this to happen)

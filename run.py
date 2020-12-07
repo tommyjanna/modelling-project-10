@@ -1,22 +1,19 @@
 from nnf import Var
 from lib204 import Encoding
-
-# Review this later
-from nnf import true
+import random
 
 
-N_AIRPORTS = 3
-N_TIMESTEPS = 4
+N_AIRPORTS = 4
+N_TIMESTEPS = 5
 N_PILOT_B_MAX_FLIGHTS = N_TIMESTEPS - 1
-
 
 class Flight:
   def __init__(self, airport):
-    self.airport = airport
+      self.airport = airport
 
-
+demand = []
 pilot_a = []
-pilot_b = []    
+pilot_b = []
 
 # Each pilot exists as an array of the class Flight.
 # There is a Flight object for every airport in the scenario multiplied
@@ -36,6 +33,33 @@ for timestep in range(N_TIMESTEPS):
         flight = Flight(flight)
         airport_list.append(Var(flight))
     pilot_b.append(airport_list)
+
+# Generate demand
+# The starting airport doesn't have any demand
+demand.append(0)
+
+for airport in range(N_AIRPORTS - 1):
+    demand.append(random.randint(0, N_TIMESTEPS - 2))
+
+
+# Calculate pilots required
+pilots = 1
+total_demand = 0
+
+for val in demand:
+    total_demand += val
+
+    if val > pilots * (N_TIMESTEPS // 2):
+        pilots += 1
+    
+while pilots * (N_TIMESTEPS - 1) < total_demand:
+    pilots += 1
+
+# Display demand
+for i in range(N_AIRPORTS):
+    print(str(i) + ": " + str(demand[i]))
+
+print("Pilots calculated: " + str(pilots))
 
 """ Display pilot variable addresses
 for i in range(3):
@@ -201,7 +225,9 @@ if __name__ == "__main__":
     # print("   Solution: %s" % T.solve())
 
     print("\nVariable likelihoods:")
-    #for flight in range(N_AIRPORTS):
-    #    for v,vn in zip([a,b,c,x,y,z], 'abcxyz'):
-    #  print(" %s: %.2f" % (vn, T.likelihood(v)))
+    """
+    for flight in range(N_AIRPORTS):
+        for v,vn in zip([a,b,c,x,y,z], 'abcxyz'):
+            print(" %s: %.2f" % (vn, T.likelihood(v)))
+    """
     print()
