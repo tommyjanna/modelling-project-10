@@ -13,13 +13,30 @@ class Flight:
     def __init__(self, airport):
         self.airport = airport
 
+class Airport:
+    def __init__(self, airport):
+        self.airport = airport
+
 class Pilot:
+    # Static counter for all instances
     count = 0
 
     def __init__(self, pilot_id, start):
+        # Name the pilots starting at A, B, ...
         self.pilot_id = chr(pilot_id + 65)
         self.current_airport = start
         Pilot.count += 1
+
+        self.location = []
+
+        # Initialize array of Var's for each pilot representing their location
+        for timestep in range(N_TIMESTEPS):
+            airports = []
+            for num in range(N_AIRPORTS):
+                airport = Airport(num)
+                airports.append(Var(airport))
+            self.location.append(airports)
+
 
     def __str__(self):
         return "Pilot: %c --- Current airport %d" % (self.pilot_id, self.current_airport)
@@ -56,25 +73,19 @@ def find_n_maxes(n, values):
     If more than n values have the same value, return those as well.
     """
 
+    sorted_values = sorted(values)
+
     greatest_indices = []
     for i in range(n):
-        greatest = 0
-
+        found_index = 0
         for j in range(len(values)):
-            if values[j] > greatest:
-                greatest = values[j]
+            if sorted_values[-1 - i] == values[j] and j not in greatest_indices:
+                greatest_indices.append(j)
 
-        values.remove(greatest)
-        greatest_indices.append(greatest)
-
-    # Add extra values from the list of the same value...
-    for i in range(len(values)):
-        if values[i] in greatest_indices:
-            greatest_indices.append(values[i])
 
     return greatest_indices
 
-def create_pilot():
+def create_pilot(demand):
     """
     Adds a new pilot at the end of the list pilots.
     """
@@ -123,22 +134,23 @@ for airport in range(N_AIRPORTS):
 
 # Create pilots required based on demand
 # No matter what, start with one pilot
-create_pilot()
+temp_demand = demand[:]
 total_demand = 0
+create_pilot(temp_demand)
 
 for val in demand:
     total_demand += val
 
     if val > Pilot.count * (N_TIMESTEPS // 2):
-        create_pilot()
+        create_pilot(temp_demand)
     
-while Pilot.count * (N_TIMESTEPS - 1) < total_demand:
-    create_pilot()
+while Pilot.count * (N_TIMESTEPS - 1) < total_demand - Pilot.count:
+    create_pilot(temp_demand)
 
 
 # Display demand
 for i in range(N_AIRPORTS):
-    print(str(i) + ": Demand " + str(demand[i]))
+    print("Airport: " + str(i) + " has demand " + str(demand[i]))
 
 print("Pilots calculated: " + str(Pilot.count))
 
@@ -191,6 +203,49 @@ def display_solution(solution):
                 if str(pilot_b[i][j]) == "Var(" + str(keys[k]) + ")":
                     print("Airport " + str(j) + ": " + str(solution[keys[k]]))
 
+def pilot_permute(pilots, options):
+    """
+    Determines all possible assignments from the first list pilots,
+    onto the second list options. This is a wrapper function for padding
+    the first list with "None" objects to calculate assignments.
+    """
+
+    # Pad the pilot list to be able to generate "assignment"
+    pad_pilots = pilots[:]
+    while len(pad_pilots) < len(options):
+        pad_pilots.append(None)
+
+    # Send padded list to normal permute function.
+    return permute(pad_pilots)
+
+def permute(pilots):
+    """
+    Returns a list of all permutations on a given list where each
+    object is used once.
+    """
+
+    if len(pilots) == 0:
+        return []
+
+
+    if len(pilots) == 1:
+        return [pilots]
+
+    # List storing partial permutations
+    partial = []
+
+    for i in range(len(pilots)):
+        # Save current pilot
+        current = pilots[i]
+
+        # Save every other object in list other than current
+        rest = pilots[:i] + pilots[i + 1:]
+
+        # Run recursive call on rest list
+        for p in permute(rest):
+            partial.append([current] + p)
+
+    return partial
 
 #
 # Build an example full theory for your setting and return it.
@@ -203,12 +258,47 @@ def example_theory():
 
     ### First determine the the valid starting points for each pilot.
     # Based on the number of pilots, which airports should be filled?
-    # There are n!/(n-r)! ways to assign n objects to m things where order matters and repetition is not allowed.
-    for i in math.factorial(len(pilots)) / math.factorial(len(pilots) - len(find_n_maxes(len(pilots), demand))):
-        #E.add_constraint(pilots[i])
-        pass
-    
-    
+    # There are r objects to fill from find_n_maxes()
+    fill = find_n_maxes(Pilot.count, demand[:])
+
+    # There are (n+r-1)C(r-1) ways to assign n objects to m things where order matters and repetition is not allowed.
+    # Equivalent to n!/(n-r)!*r!
+    starting = pilot_permute(pilots, fill)
+
+    starting_constraint = ''
+    for scenario in starting:
+        first = True
+
+        for i in range(len(scenario)):
+            if scenario[i] == None:
+                # This was padded object, do nothing
+                continue
+
+            # Find out which pilot is chosen for a given airport
+            for p in range(len(pilots)):
+                if pilots[p].pilot_id == scenario[i].pilot_id:
+                    if first:
+                        starting_constraint += '(pilots[%d].location[0][%d]' % (p, fill[i])
+                        first = False
+                    else:
+                        starting_constraint += ' & pilots[%d].location[0][%d]' % (p, fill[i])
+
+        starting_constraint += ') | '
+
+    starting_constraint = starting_constraint[:-3]
+    E.add_constraint(eval(starting_constraint))
+
+
+    """ Extra information!
+    print(starting_constraint)
+    count = 0
+    my = pilot_permute(pilots, fill)
+    for i in range(len(my)):
+        for j in range(len(my[i])):
+            count += 1
+    print("There are: " + str(count) + " different initial positions for the pilots")
+    """
+
     
     ### Pilot A can only make one flight per timestep.
     # Use a string to build the logical expression dynamically.
