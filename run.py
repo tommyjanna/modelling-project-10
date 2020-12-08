@@ -1,6 +1,7 @@
 from nnf import Var
 from lib204 import Encoding
 import random
+import math
 
 
 N_AIRPORTS = 4
@@ -47,6 +48,31 @@ def find_max(values):
 
     # greatest_indices will have 1 or more indices. Pick one at random.
     return random.choice(greatest_indices)
+
+def find_n_maxes(n, values):
+    """
+    NOTE: Pass values by VALUE!
+    Returns indices of the n max values from a list.
+    If more than n values have the same value, return those as well.
+    """
+
+    greatest_indices = []
+    for i in range(n):
+        greatest = 0
+
+        for j in range(len(values)):
+            if values[j] > greatest:
+                greatest = values[j]
+
+        values.remove(greatest)
+        greatest_indices.append(greatest)
+
+    # Add extra values from the list of the same value...
+    for i in range(len(values)):
+        if values[i] in greatest_indices:
+            greatest_indices.append(values[i])
+
+    return greatest_indices
 
 def create_pilot():
     """
@@ -174,6 +200,15 @@ def display_solution(solution):
 #  what the expectations are.
 def example_theory():
     E = Encoding()
+
+    ### First determine the the valid starting points for each pilot.
+    # Based on the number of pilots, which airports should be filled?
+    # There are n!/(n-r)! ways to assign n objects to m things where order matters and repetition is not allowed.
+    for i in math.factorial(len(pilots)) / math.factorial(len(pilots) - len(find_n_maxes(len(pilots), demand))):
+        #E.add_constraint(pilots[i])
+        pass
+    
+    
     
     ### Pilot A can only make one flight per timestep.
     # Use a string to build the logical expression dynamically.
