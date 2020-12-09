@@ -272,6 +272,8 @@ def example_theory():
         starting_constraint += ') | '
 
     starting_constraint = starting_constraint[:-3]
+    print("FIRST")
+    print(starting_constraint)
     E.add_constraint(eval(starting_constraint))
 
 
@@ -316,6 +318,9 @@ def example_theory():
         # Remove the last & from the string.
         only_one_airport = only_one_airport[:-4]
 
+        print("SECOND")
+        print(only_one_airport)
+
         # Evaluate the string to turn it into NNF type
         E.add_constraint(eval(only_one_airport))
     ###########################################################################
@@ -353,6 +358,8 @@ def example_theory():
 
     only_one_pilot = only_one_pilot[:-3]
 
+    print("THIRD")
+    print(only_one_pilot)
     E.add_constraint(eval(only_one_pilot))
     ###########################################################################
 
@@ -363,6 +370,7 @@ def example_theory():
         for timestep in range(N_TIMESTEPS - 1):
             for airport in range(N_AIRPORTS):
                 # Pilot cannot be at the same location at an incremented timestep.
+                print("~pilots[%d].location[%d][%d] | ~pilots[%d].location[%d + 1][%d]" % (pilot, timestep, airport, pilot, timestep, airport))
                 E.add_constraint(~pilots[pilot].location[timestep][airport] | ~pilots[pilot].location[timestep + 1][airport])
     ###########################################################################
 
