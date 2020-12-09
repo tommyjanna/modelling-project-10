@@ -3,10 +3,9 @@ from lib204 import Encoding
 import random
 import math
 
-
+# Can be any value greater than 0 (these are good defaults)
 N_AIRPORTS = 4
 N_TIMESTEPS = 5
-N_PILOT_B_MAX_FLIGHTS = N_TIMESTEPS - 1
 
 
 class Airport:
@@ -20,7 +19,7 @@ class Pilot:
     def __init__(self, pilot_id, start):
         # Name the pilots starting at A, B, ...
         self.pilot_id = chr(pilot_id + 65)
-        self.current_airport = start
+        self.starting_airport = start
         Pilot.count += 1
 
         self.location = []
@@ -33,12 +32,8 @@ class Pilot:
                 airports.append(Var(airport))
             self.location.append(airports)
 
-
     def __str__(self):
-        return "Pilot: %c --- Current airport %d" % (self.pilot_id, self.current_airport)
-
-    def fly():
-        pass
+        return "Pilot: %c --- Starting airport %d" % (self.pilot_id, self.starting_airport)
 
 
 def find_max(values):
@@ -86,82 +81,14 @@ def create_pilot(demand):
     Adds a new pilot at the end of the list pilots.
     """
     new_pilot = Pilot(len(pilots), find_max(demand))
-    demand[new_pilot.current_airport] -= 1
+    
+    # Set demand temporarily to -1, because another pilot cannot spawn here.
+    demand[new_pilot.starting_airport] = -1
     pilots.append(new_pilot)
 
 def display_pilots(pilots):
     for pilot in pilots:
         print(pilot)
-
-
-
-demand = []
-pilots = []
-
-"""##### OLD CODE TO BE REPLACED
-pilot_a = []
-pilot_b = []
-
-# Each pilot exists as an array of the class Flight.
-# There is a Flight object for every airport in the scenario multiplied
-# by the total number of timesteps. If a Flight is marked as True,
-# the pilot is at that airport at that given timestep. Otherwise, False.
-for timestep in range(N_TIMESTEPS):
-    # Initialize pilot A variables
-    airport_list = []
-    for flight in range(N_AIRPORTS):
-        flight = Flight(flight)
-        airport_list.append(Var(flight))
-    pilot_a.append(airport_list)
-
-    # Initialize pilot B variables
-    airport_list = []
-    for flight in range(N_AIRPORTS):
-        flight = Flight(flight)
-        airport_list.append(Var(flight))
-    pilot_b.append(airport_list)
-##### END OLD CODE TO BE REPLACED
-"""
-
-# Generate demand
-# The starting airport doesn't have any demand
-for airport in range(N_AIRPORTS):
-    demand.append(random.randint(0, N_TIMESTEPS - 1))
-
-
-# Create pilots required based on demand
-# No matter what, start with one pilot
-temp_demand = demand[:]
-total_demand = 0
-create_pilot(temp_demand)
-
-for val in demand:
-    total_demand += val
-
-    if val > Pilot.count * (N_TIMESTEPS // 2):
-        create_pilot(temp_demand)
-    
-while Pilot.count * (N_TIMESTEPS - 1) < total_demand - Pilot.count:
-    create_pilot(temp_demand)
-
-
-# Display demand
-for i in range(N_AIRPORTS):
-    print("Airport: " + str(i) + " has demand " + str(demand[i]))
-
-print("Pilots calculated: " + str(Pilot.count))
-
-display_pilots(pilots)
-
-""" Display pilot variable addresses
-for i in range(3):
-    for j in range(3):
-        print(pilot_a[i][j])
-
-for i in range(3):
-    for j in range(3):
-        print(pilot_b[i][j])
-"""
 
 def iff(left, right):
     return (left.negate() | right) & (right.negate() | left)
@@ -169,51 +96,39 @@ def iff(left, right):
 def xor(left, right):
     return (left & right).negate() & (left | right)
 
+def display_solution(solution, verbose=False):
+    """
+    Converts normal NNF solution outputs to display each pilots flight statuses in order of timestep.
+    Originally, the solution output is difficult to read and out of order.
 
-"""
-Converts normal NNF solution outputs to display each pilots flight statuses in order of timestep.
-Originally, the solution output is difficult to read and out of order.
+    Normal solution output:
+    {<__main__.Pilot object at 0x7f09c42d3280>: True, <__main__.Pilot object at 0x7f09c42cc820>: True, <__main__.Pilot object at 0x7f09c43d46a0>: False}   
 
-Normal solution output:
-{<__main__.Flight object at 0x7f09c42d3280>: True, <__main__.Flight object at 0x7f09c42cc820>: True, <__main__.Flight object at 0x7f09c43d46a0>: False}   
-
-display_solution() output:
-Pilot A:
-Timestep 0:
-Airport 0: True
-Airport 1: False
-...
-"""
-def old_display_solution(solution):
-    print("Pilot A")
-    for i in range(N_TIMESTEPS):
-        print("Timestep " + str(i))
-        for j in range(N_AIRPORTS):
-            keys = list(solution)
-            for k in range(len(keys)):
-                if str(pilot_a[i][j]) == "Var(" + str(keys[k]) + ")":
-                    print("Airport " + str(j) + ": " + str(solution[keys[k]]))
-
-    print("\nPilot B")
-    for i in range(N_TIMESTEPS):
-        print("Timestep " + str(i))
-        for j in range(N_AIRPORTS):
-            keys = list(solution)
-            for k in range(len(keys)):
-                if str(pilot_b[i][j]) == "Var(" + str(keys[k]) + ")":
-                    print("Airport " + str(j) + ": " + str(solution[keys[k]]))
-
-def display_solution(solution):
+    display_solution() output:
+    Pilot A:
+    Timestep 0:
+    Airport 0: True
+    Airport 1: False
+    ...
+    """
     for pilot in range(Pilot.count):
-        print(pilots[pilot])
+        print("Pilot " + pilots[pilot].pilot_id)
 
         for i in range(N_TIMESTEPS):
-            print("Timestep " + str(i))
+            if verbose:
+                print("Timestep " + str(i))
             for j in range(N_AIRPORTS):
                 keys = list(solution)
                 for k in range(len(keys)):
                     if str(pilots[pilot].location[i][j]) == "Var(" + str(keys[k]) + ")":
-                        print("Airport " + str(j) + ": " + str(solution[keys[k]]))
+                        if verbose:
+                            print("Airport " + str(j) + ": " + str(solution[keys[k]]))
+                        else:
+                            if str(solution[keys[k]]) == 'True':
+                                if i == N_TIMESTEPS - 1:
+                                    print("Airport " + str(j) + "\n")
+                                else:
+                                    print("Airport " + str(j) + " --> ", end="")
 
 def pilot_permute(pilots, options):
     """
@@ -258,6 +173,92 @@ def permute(pilots):
             partial.append([current] + p)
 
     return partial
+
+
+demand = []
+pilots = []
+
+"""##### OLD CODE TO BE REPLACED
+pilot_a = []
+pilot_b = []
+
+# Each pilot exists as an array of the class Flight.
+# There is a Flight object for every airport in the scenario multiplied
+# by the total number of timesteps. If a Flight is marked as True,
+# the pilot is at that airport at that given timestep. Otherwise, False.
+for timestep in range(N_TIMESTEPS):
+    # Initialize pilot A variables
+    airport_list = []
+    for flight in range(N_AIRPORTS):
+        flight = Flight(flight)
+        airport_list.append(Var(flight))
+    pilot_a.append(airport_list)
+
+    # Initialize pilot B variables
+    airport_list = []
+    for flight in range(N_AIRPORTS):
+        flight = Flight(flight)
+        airport_list.append(Var(flight))
+    pilot_b.append(airport_list)
+##### END OLD CODE TO BE REPLACED
+"""
+
+### Initialize scenario
+# Generate demand
+# The starting airport doesn't have any demand
+for airport in range(N_AIRPORTS):
+    demand.append(random.randint(0, N_TIMESTEPS - 1))
+
+# Display demand
+print("Randomly generated demand for " + str(N_AIRPORTS) + " airports...")
+for i in range(N_AIRPORTS):
+    print("Airport " + str(i) + " has a demand of " + str(demand[i]))
+
+
+# Create pilots required based on demand
+# No matter what, start with one pilot
+temp_demand = demand[:]
+total_demand = 0
+create_pilot(temp_demand)
+
+for val in demand:
+    total_demand += val
+
+    if val > Pilot.count * (N_TIMESTEPS // 2):
+        create_pilot(temp_demand)
+    
+while Pilot.count * (N_TIMESTEPS - 1) < total_demand - Pilot.count:
+    create_pilot(temp_demand)
+
+# Display pilots
+print("\nPilots calculated: " + str(Pilot.count))
+print("Example starting location of airports (may not be same as what T.solve() shows, but valid nonetheless)...")
+display_pilots(pilots)
+
+# Update demand
+for pilot in range(Pilot.count):
+    demand[pilots[pilot].starting_airport] -= 1
+
+""" OLD 
+def old_display_solution(solution):
+    print("Pilot A")
+    for i in range(N_TIMESTEPS):
+        print("Timestep " + str(i))
+        for j in range(N_AIRPORTS):
+            keys = list(solution)
+            for k in range(len(keys)):
+                if str(pilot_a[i][j]) == "Var(" + str(keys[k]) + ")":
+                    print("Airport " + str(j) + ": " + str(solution[keys[k]]))
+
+    print("\nPilot B")
+    for i in range(N_TIMESTEPS):
+        print("Timestep " + str(i))
+        for j in range(N_AIRPORTS):
+            keys = list(solution)
+            for k in range(len(keys)):
+                if str(pilot_b[i][j]) == "Var(" + str(keys[k]) + ")":
+                    print("Airport " + str(j) + ": " + str(solution[keys[k]]))
+"""
 
 #
 # Build an example full theory for your setting and return it.
@@ -312,6 +313,7 @@ def example_theory():
     """
 
 
+
     ### Every pilot can only make one flight per timestep.
     for pilot in range(Pilot.count):
         only_one_airport = '('
@@ -338,12 +340,11 @@ def example_theory():
 
         # Remove the last & from the string.
         only_one_airport = only_one_airport[:-4]
-        print(only_one_airport)
 
         # Evaluate the string to turn it into NNF type
         E.add_constraint(eval(only_one_airport))
 
-    """
+    """ OLD
     ### A single pilot cannot be at multiple airports at the same timestep.
     for pilot in range(Pilot.count):
         for timestep in range(N_TIMESTEPS):
@@ -389,6 +390,22 @@ def example_theory():
 
     only_one_pilot = only_one_pilot[:-3]
     E.add_constraint(eval(only_one_pilot))
+
+    
+    ### Each pilot cannot remain at the same airport in two adjacent timesteps.
+    for pilot in range(Pilot.count):
+        for timestep in range(N_TIMESTEPS - 1):
+            for airport in range(N_AIRPORTS):
+                E.add_constraint(~pilots[pilot].location[timestep][airport] | ~pilots[pilot].location[timestep + 1][airport])
+
+
+    ### Pilot should only fly to an airport that has demand.
+    for pilot in range(Pilot.count):
+        for timestep in range(N_TIMESTEPS - 1):
+            for airport in range(N_AIRPORTS):
+                if demand[airport] == 0:
+                    E.add_constraint(~pilots[pilot].location[timestep][airport])
+
 
 
     """ DUPLICATE OLD CODE
@@ -503,10 +520,13 @@ if __name__ == "__main__":
     display_solution(T.solve())
     # print("   Solution: %s" % T.solve())
 
+    """ Extra information
     print("\nVariable likelihoods:")
+    for pilot in range(Pilot.count):
+        for timestep in range(N_TIMESTEPS):
+            for airport in range(N_AIRPORTS):
+                name = "Pilot " + pilots[pilot].pilot_id + " at timestep " + str(timestep) + " at airport " + str(airport)
+                print(" %s: %.2f" % (name, T.likelihood(pilots[pilot].location[timestep][airport])))
     """
-    for flight in range(N_AIRPORTS):
-        for v,vn in zip([a,b,c,x,y,z], 'abcxyz'):
-            print(" %s: %.2f" % (vn, T.likelihood(v)))
-    """
+
     print()
