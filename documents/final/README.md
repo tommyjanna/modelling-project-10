@@ -4,7 +4,8 @@ This folder should contain the extra documents for the deliverables (D3) - (D5)
 
 ## Due Date
 
-November 30th, 2020
+---November 30th, 2020---
+Updated: December 9th, 2020
 
 ## Expected Items
 
