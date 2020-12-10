@@ -1,13 +1,17 @@
 [![Work in Repl.it](https://classroom.github.com/assets/work-in-replit-14baed9a392b3a25080506f3b7b6d57f295ec2978f6f33ec97e36a161684cbe9.svg)](https://classroom.github.com/online_ide?assignment_repo_id=317169&assignment_repo_type=GroupAssignmentRepo)
 
-# CISC/CMPE 204 Modelling Project
+# Flight Booking - CISC/CMPE 204 Modelling Project (Group 10)
 
-Welcome to the major project for CISC/CMPE 204 (Fall 2020)!
+Our model aims to represent a flight booking system for an airline on a given day.
 
-Change this README.md file to summarize your project (few sentences at most), and provide pointers to the general structure of the repository. How you organize and build things (which files, how you structure things, etc) is entirely up to you! The only things you must keep in place are what is already listed in the **Structure** section below.
+There are a variable amount of airports and timesteps, that can be modified by changing the constant value at the top of the `run.py` program. Our project should be able to handle any number of airports/timesteps only limited by your computer's specs.
+
+The booking system works on the basis of demand for flights at specific airportsneeding to be fulfilled each day.  In each generation of the model, the demand at each airport is a randomly generated number of flights. The number of pilots for a specific generation of themodel is the least number of pilots needed to fulfill the demand of each airport.
+
 
 ## Structure
 
+* `run_verbose.py`: This is a quite verbose version of `run.py` that we used for debugging. There is a lot more output to analyze the entire model for a given scenario. Functionally, this program is identical to `run.py`
 * `documents`: Contains folders for both of your draft and final submissions. README.md files are included in both.
 * `run.py`: General wrapper script that you can choose to use or not. Only requirement is that you implement the one function inside of there for the auto-checks.
 * `test.py`: Run this file to confirm that your submission has everything required. This essentially just means it will check for the right files and sufficient theory size.

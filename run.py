@@ -399,8 +399,8 @@ if __name__ == "__main__":
         display_solution(T.solve())
 
 
+    """
     # Extra Information: Uncomment to display variable likelihoods
-    """ 
     print("\nVariable likelihoods:")
     for pilot in range(Pilot.count):
         for timestep in range(N_TIMESTEPS):
