@@ -10,4 +10,4 @@ Updated: December 9th, 2020
 ## Expected Items
 
 * `proofs.jp`: Jape file containing sequents, as well as their proofs.
-`report.pdf`: Compiled pdf using Latex containing projection documentation.
+*`report.pdf`: Compiled pdf using Latex containing projection documentation.
