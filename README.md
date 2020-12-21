@@ -2,6 +2,8 @@
 
 # Flight Booking - CISC/CMPE 204 Modelling Project (Group 10)
 
+This project uses the [Python package](https://pypi.org/project/nnf/) `nnf` for creating logical constraints in negation normal form.
+
 Our model aims to represent a flight booking system for an airline on a given day.
 
 There are a variable amount of airports and timesteps, that can be modified by changing the constant value at the top of the `run.py` program. Our project should be able to handle any number of airports/timesteps only limited by your computer's specs.
@@ -11,7 +13,7 @@ The booking system works on the basis of demand for flights at specific airports
 
 ## Structure
 
-* `run_verbose.py`: This is a quite verbose version of `run.py` that we used for debugging. There is a lot more output to analyze the entire model for a given scenario. Functionally, this program is identical to `run.py`
-* `documents`: Contains folders for both of your draft and final submissions. README.md files are included in both.
+* `run_verbose.py`: This program is functionally identical to `run.py`. This version enables additional verbose output to show the marker additional output to analyze the entire model that we used for debugging, without requiring them to modify the source code.
+* `documents`: Contains folders for both of your draft and final submissions (including Jape proofs and final report). README.md files are included in both.
 * `run.py`: General wrapper script that you can choose to use or not. Only requirement is that you implement the one function inside of there for the auto-checks.
 * `test.py`: Run this file to confirm that your submission has everything required. This essentially just means it will check for the right files and sufficient theory size.
